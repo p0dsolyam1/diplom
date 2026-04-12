@@ -1,23 +1,19 @@
 import { ref, onUnmounted } from 'vue'
+import { processFrame } from '../services/imageProcessor.js'
 
 const SNAPSHOT_FPS = 5
 const SNAPSHOT_INTERVAL = 1000 / SNAPSHOT_FPS
 
-// Размер кадра, отправляемого на сервер
-const FRAME_WIDTH = 640
+const FRAME_WIDTH  = 640
 const FRAME_HEIGHT = 480
 
 export function useCamera() {
   const videoRef = ref(null)
-  const stream = ref(null)
-  const error = ref(null)
-  const isReady = ref(false)
+  const stream   = ref(null)
+  const error    = ref(null)
+  const isReady  = ref(false)
 
   let snapshotTimer = null
-  const offscreenCanvas = document.createElement('canvas')
-  offscreenCanvas.width = FRAME_WIDTH
-  offscreenCanvas.height = FRAME_HEIGHT
-  const ctx = offscreenCanvas.getContext('2d')
 
   async function startCamera() {
     error.value = null
@@ -49,12 +45,19 @@ export function useCamera() {
     isReady.value = false
   }
 
-  // Запускает периодический захват кадров, вызывает onSnapshot(base64) на каждый кадр
-  function startSnapshots(onSnapshot) {
+  /**
+   * Запускает периодический захват кадров.
+   * @param {Function} onSnapshot - вызывается с { image: base64, offset: {x,y} }
+   * @param {Function} getCorners - функция, возвращающая текущие углы мишени (или null)
+   */
+  function startSnapshots(onSnapshot, getCorners = () => null) {
     if (snapshotTimer) return
     snapshotTimer = setInterval(() => {
-      const frame = captureFrame()
-      if (frame) onSnapshot(frame)
+      if (!videoRef.value || !isReady.value) return
+      const corners = getCorners()
+      // Обработчик изображения: обрезает кадр по углам мишени
+      const result = processFrame(videoRef.value, corners, FRAME_WIDTH, FRAME_HEIGHT)
+      if (result) onSnapshot(result)
     }, SNAPSHOT_INTERVAL)
   }
 
@@ -65,16 +68,9 @@ export function useCamera() {
     }
   }
 
-  function captureFrame() {
-    if (!videoRef.value || !isReady.value) return null
-    ctx.drawImage(videoRef.value, 0, 0, FRAME_WIDTH, FRAME_HEIGHT)
-    // Качество 0.7 — баланс между скоростью и точностью для ИИ
-    return offscreenCanvas.toDataURL('image/jpeg', 0.7)
-  }
-
   function getCameraErrorMessage(err) {
-    if (err.name === 'NotAllowedError') return 'Доступ к камере запрещён. Разрешите доступ в настройках браузера.'
-    if (err.name === 'NotFoundError') return 'Камера не найдена.'
+    if (err.name === 'NotAllowedError')  return 'Доступ к камере запрещён. Разрешите доступ в настройках браузера.'
+    if (err.name === 'NotFoundError')    return 'Камера не найдена.'
     if (err.name === 'NotReadableError') return 'Камера занята другим приложением.'
     return `Ошибка камеры: ${err.message}`
   }
@@ -92,6 +88,5 @@ export function useCamera() {
     stopCamera,
     startSnapshots,
     stopSnapshots,
-    captureFrame,
   }
 }
