@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useExerciseStore } from './exercise.js'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('auth_token') || null)
@@ -33,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || 'Ошибка входа')
+    useExerciseStore().reset()
     _save(data.token, data.user)
     page.value = data.user.role === 'admin' ? 'admin' : 'app'
   }
@@ -45,11 +47,13 @@ export const useAuthStore = defineStore('auth', () => {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || 'Ошибка регистрации')
+    useExerciseStore().reset()
     _save(data.token, data.user)
     page.value = 'app'
   }
 
   function logout() {
+    useExerciseStore().reset()
     token.value = null
     user.value  = null
     localStorage.removeItem('auth_token')
