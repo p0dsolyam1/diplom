@@ -33,16 +33,17 @@
 <script setup>
 import { ref } from 'vue'
 import { useExerciseStore } from '../stores/exercise.js'
+import { authFetch } from '../utils/api.js'
 
-const store = useExerciseStore()
+const store   = useExerciseStore()
 const loading = ref(false)
-const error = ref(null)
+const error   = ref(null)
 
 async function handleStart() {
   loading.value = true
-  error.value = null
+  error.value   = null
   try {
-    const res = await fetch('/api/exercises', { method: 'POST' })
+    const res = await authFetch('/api/exercises', { method: 'POST' })
     if (!res.ok) throw new Error(`Сервер: ${res.status}`)
     const data = await res.json()
     store.startExercise(data.id)
@@ -55,9 +56,9 @@ async function handleStart() {
 
 async function handleStop() {
   loading.value = true
-  error.value = null
+  error.value   = null
   try {
-    const res = await fetch(`/api/exercises/${store.exerciseId}/finish`, { method: 'PUT' })
+    const res = await authFetch(`/api/exercises/${store.exerciseId}/finish`, { method: 'PUT' })
     if (!res.ok) throw new Error(`Сервер: ${res.status}`)
     const data = await res.json()
     store.finishExercise(data)
@@ -91,25 +92,13 @@ function handleNewExercise() {
   transition: opacity 0.15s, transform 0.1s;
 }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:not(:disabled):active { transform: scale(0.97); }
 
-.btn:not(:disabled):active {
-  transform: scale(0.97);
-}
-
-.btn-start {
-  background: #238636;
-  color: #fff;
-}
+.btn-start { background: #238636; color: #fff; }
 .btn-start:not(:disabled):hover { background: #2ea043; }
 
-.btn-stop {
-  background: #b62324;
-  color: #fff;
-}
+.btn-stop { background: #b62324; color: #fff; }
 .btn-stop:not(:disabled):hover { background: #d1242f; }
 
 .btn-secondary {
