@@ -62,13 +62,17 @@ export function useWebSocket() {
     isConnected.value = false
   }
 
-  // Отправить кадр на сервер
-  function sendFrame(base64, exerciseId) {
+  /**
+   * Отправить обработанный кадр на сервер.
+   * @param {string} base64   - base64 кадра (уже обрезанного по мишени)
+   * @param {number} exerciseId
+   * @param {{ x: number, y: number }} offset - смещение обрезки в исходном кадре
+   */
+  function sendFrame(base64, exerciseId, offset = { x: 0, y: 0 }) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return
-    ws.send(JSON.stringify({ type: 'frame', data: base64, exerciseId }))
+    ws.send(JSON.stringify({ type: 'frame', data: base64, exerciseId, offset }))
   }
 
-  // Подписаться на тип сообщений
   function on(type, handler) {
     messageHandlers[type] = handler
   }
