@@ -46,7 +46,7 @@ async function handleStart() {
     const res = await authFetch('/api/exercises', { method: 'POST' })
     if (!res.ok) throw new Error(`Сервер: ${res.status}`)
     const data = await res.json()
-    store.startExercise(data.id)
+    store.startExercise(data.id, data.user_exercise_number)
   } catch (err) {
     error.value = `Не удалось начать упражнение: ${err.message}`
   } finally {

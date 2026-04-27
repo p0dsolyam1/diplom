@@ -2,31 +2,31 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useExerciseStore = defineStore('exercise', () => {
-  const exerciseId   = ref(null)
-  const isRunning    = ref(false)
-  const startedAt    = ref(null)
-  const finishedAt   = ref(null)
-  const hits         = ref([])
-  const history      = ref([])
-  const view         = ref('camera')
+  const exerciseId         = ref(null)
+  const userExerciseNumber = ref(null)
+  const isRunning          = ref(false)
+  const startedAt          = ref(null)
+  const finishedAt         = ref(null)
+  const hits               = ref([])
+  const history            = ref([])
+  const view               = ref('camera')
 
-  // null — не откалибровано, [{x,y}]×4 — углы мишени в координатах кадра 640×480
   const targetCorners = ref(null)
   const isCalibrating = ref(false)
 
   const totalHits    = computed(() => hits.value.length)
-  // isCalibrated — производное от targetCorners, отдельный ref не нужен
   const isCalibrated = computed(() => targetCorners.value !== null)
 
   // ─── Упражнение ──────────────────────────────────────────────────────────
 
-  function startExercise(id) {
-    exerciseId.value = id
-    isRunning.value  = true
-    startedAt.value  = new Date()
-    finishedAt.value = null
-    hits.value       = []
-    view.value       = 'camera'
+  function startExercise(id, exerciseNumber) {
+    exerciseId.value         = id
+    userExerciseNumber.value = exerciseNumber
+    isRunning.value          = true
+    startedAt.value          = new Date()
+    finishedAt.value         = null
+    hits.value               = []
+    view.value               = 'camera'
   }
 
   function addHits(newHits) {
@@ -40,24 +40,25 @@ export const useExerciseStore = defineStore('exercise', () => {
     finishedAt.value = new Date()
 
     history.value.unshift({
-      id:         exerciseId.value,
-      startedAt:  startedAt.value,
-      finishedAt: finishedAt.value,
-      hits:       [...hits.value],
-      totalHits:  hits.value.length,
+      id:                 exerciseId.value,
+      userExerciseNumber: userExerciseNumber.value,
+      startedAt:          startedAt.value,
+      finishedAt:         finishedAt.value,
+      hits:               [...hits.value],
+      totalHits:          hits.value.length,
     })
 
     view.value = 'results'
   }
 
   function reset() {
-    exerciseId.value = null
-    isRunning.value  = false
-    startedAt.value  = null
-    finishedAt.value = null
-    hits.value       = []
-    view.value       = 'camera'
-    // калибровка сохраняется между упражнениями — мишень не меняется
+    exerciseId.value         = null
+    userExerciseNumber.value = null
+    isRunning.value          = false
+    startedAt.value          = null
+    finishedAt.value         = null
+    hits.value               = []
+    view.value               = 'camera'
   }
 
   // ─── Калибровка ──────────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ export const useExerciseStore = defineStore('exercise', () => {
 
   return {
     exerciseId,
+    userExerciseNumber,
     isRunning,
     startedAt,
     finishedAt,

@@ -4,7 +4,12 @@ import pool from '../db/pool.js'
 
 export async function createExercise(userId) {
   const { rows } = await pool.query(
-    'INSERT INTO exercises (user_id, started_at) VALUES ($1, NOW()) RETURNING *',
+    `WITH inserted AS (
+       INSERT INTO exercises (user_id, started_at) VALUES ($1, NOW()) RETURNING *
+     )
+     SELECT i.*,
+       (SELECT COUNT(*) FROM exercises WHERE user_id = $1) AS user_exercise_number
+     FROM inserted i`,
     [userId]
   )
   return rows[0]
