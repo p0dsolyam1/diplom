@@ -2,9 +2,10 @@ import pool from '../db/pool.js'
 
 // ─── Упражнения ────────────────────────────────────────────────────────────
 
-export async function createExercise() {
+export async function createExercise(userId) {
   const { rows } = await pool.query(
-    'INSERT INTO exercises (started_at) VALUES (NOW()) RETURNING *'
+    'INSERT INTO exercises (user_id, started_at) VALUES ($1, NOW()) RETURNING *',
+    [userId]
   )
   return rows[0]
 }
@@ -26,10 +27,10 @@ export async function getExercise(id) {
   return rows[0] ?? null
 }
 
-export async function listExercises(limit = 20) {
+export async function listExercises(userId, limit = 20) {
   const { rows } = await pool.query(
-    'SELECT * FROM exercises ORDER BY started_at DESC LIMIT $1',
-    [limit]
+    'SELECT * FROM exercises WHERE user_id = $1 ORDER BY started_at DESC LIMIT $2',
+    [userId, limit]
   )
   return rows
 }

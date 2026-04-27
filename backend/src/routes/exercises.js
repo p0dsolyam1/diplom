@@ -4,10 +4,10 @@ import { onExerciseFinished } from '../websocket/handler.js'
 
 const router = Router()
 
-// GET /api/exercises — список упражнений
-router.get('/', async (_req, res) => {
+// GET /api/exercises — список упражнений текущего пользователя
+router.get('/', async (req, res) => {
   try {
-    const exercises = await listExercises()
+    const exercises = await listExercises(req.user.id)
     res.json(exercises)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -26,9 +26,9 @@ router.get('/:id', async (req, res) => {
 })
 
 // POST /api/exercises — начать новое упражнение
-router.post('/', async (_req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const exercise = await createExercise()
+    const exercise = await createExercise(req.user.id)
     res.status(201).json(exercise)
   } catch (err) {
     res.status(500).json({ error: err.message })
