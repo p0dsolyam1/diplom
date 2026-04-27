@@ -10,7 +10,7 @@
       <div class="logo">🎯 Стрелок</div>
 
       <div class="header-center" v-if="exerciseStore.exerciseId">
-        Упражнение #{{ exerciseStore.exerciseId }}
+        Упражнение #{{ exerciseStore.userExerciseNumber }}
       </div>
 
       <div class="header-right">
