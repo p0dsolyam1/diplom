@@ -1,8 +1,9 @@
 <template>
-  <!-- Аутентификация -->
+  <!-- Аутентификация и отдельные страницы -->
   <LoginView    v-if="authStore.page === 'login'"    />
   <RegisterView v-else-if="authStore.page === 'register'" />
   <AdminPanel   v-else-if="authStore.page === 'admin'"   />
+  <ProfileView  v-else-if="authStore.page === 'profile'" />
 
   <!-- Основное приложение -->
   <div class="app" v-else>
@@ -15,6 +16,7 @@
 
       <div class="header-right">
         <span class="username">{{ authStore.user?.username }}</span>
+        <button class="btn-header btn-profile" @click="authStore.setPage('profile')">Профиль</button>
         <button
           v-if="authStore.isAdmin"
           class="btn-header btn-admin"
@@ -46,6 +48,7 @@ import { useExerciseStore } from './stores/exercise.js'
 import LoginView    from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
 import AdminPanel   from './views/AdminPanel.vue'
+import ProfileView  from './views/ProfileView.vue'
 import CameraView   from './components/CameraView.vue'
 import Controls     from './components/Controls.vue'
 import ResultsView  from './components/ResultsView.vue'
@@ -125,6 +128,13 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
+
+.btn-profile {
+  background: #21262d;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+}
+.btn-profile:hover { background: #30363d; }
 
 .btn-admin {
   background: #2d1f6e;

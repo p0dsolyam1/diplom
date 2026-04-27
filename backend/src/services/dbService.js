@@ -24,20 +24,40 @@ export async function finishExercise(id) {
   return rows[0]
 }
 
-export async function getExercise(id) {
+export async function getExercise(id, userId) {
   const { rows } = await pool.query(
-    'SELECT * FROM exercises WHERE id = $1',
-    [id]
+    `SELECT e.*,
+       json_agg(h ORDER BY h.timestamp ASC) FILTER (WHERE h.id IS NOT NULL) AS hits
+     FROM exercises e
+     LEFT JOIN hits h ON h.exercise_id = e.id
+     WHERE e.id = $1 ${userId ? 'AND e.user_id = $2' : ''}
+     GROUP BY e.id`,
+    userId ? [id, userId] : [id]
   )
   return rows[0] ?? null
 }
 
 export async function listExercises(userId, limit = 20) {
   const { rows } = await pool.query(
-    'SELECT * FROM exercises WHERE user_id = $1 ORDER BY started_at DESC LIMIT $2',
+    `SELECT e.id, e.user_id, e.started_at, e.finished_at,
+       COUNT(h.id)::integer AS hit_count,
+       ROW_NUMBER() OVER (ORDER BY e.started_at ASC)::integer AS user_exercise_number
+     FROM exercises e
+     LEFT JOIN hits h ON h.exercise_id = e.id
+     WHERE e.user_id = $1
+     GROUP BY e.id
+     ORDER BY e.started_at DESC
+     LIMIT $2`,
     [userId, limit]
   )
   return rows
+}
+
+export async function deleteExercise(id, userId) {
+  await pool.query(
+    'DELETE FROM exercises WHERE id = $1 AND user_id = $2',
+    [id, userId]
+  )
 }
 
 // ─── Попадания ──────────────────────────────────────────────────────────────
