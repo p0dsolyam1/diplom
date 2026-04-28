@@ -4,9 +4,10 @@
  * Задача: убирать дубли и шумовые срабатывания AI перед записью в БД.
  *
  * Правила фильтрации:
- *  1. Если новое попадание ближе MIN_DISTANCE пикселей к уже
+ *  1. Координаты за пределами кадра (< 0 или > размер) — отбрасываем.
+ *  2. Если задана область калибровки (polygon) — отбрасываем попадания вне полигона.
+ *  3. Если новое попадание ближе MIN_DISTANCE пикселей к уже
  *     зафиксированному (в пределах TIME_WINDOW мс) — это дубль, пропускаем.
- *  2. Координаты за пределами кадра (< 0 или > размер) — отбрасываем.
  */
 
 const MIN_DISTANCE = 15   // px — минимальное расстояние между попаданиями
@@ -18,7 +19,26 @@ const FRAME_HEIGHT = 480
 // Кэш недавних попаданий по упражнению: Map<exerciseId, Array<{x,y,time}>>
 const cache = new Map()
 
-export function filterHits(exerciseId, hits) {
+// Ray-casting: возвращает true, если точка внутри полигона
+function isInsidePolygon(point, polygon) {
+  const { x, y } = point
+  let inside = false
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x, yi = polygon[i].y
+    const xj = polygon[j].x, yj = polygon[j].y
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+      inside = !inside
+    }
+  }
+  return inside
+}
+
+/**
+ * @param {number} exerciseId
+ * @param {Array<{x,y}>} hits  — координаты в пространстве полного кадра (640×480)
+ * @param {Array<{x,y}>|null} polygon — углы калибровки в том же пространстве; null = не задана
+ */
+export function filterHits(exerciseId, hits, polygon = null) {
   if (!cache.has(exerciseId)) {
     cache.set(exerciseId, [])
   }
@@ -37,7 +57,12 @@ export function filterHits(exerciseId, hits) {
       continue
     }
 
-    // 2. Проверяем на дубль
+    // 2. Если задана область калибровки — отбрасываем попадания вне полигона
+    if (polygon && polygon.length >= 3 && !isInsidePolygon(hit, polygon)) {
+      continue
+    }
+
+    // 3. Проверяем на дубль
     const isDuplicate = fresh.some(
       h => Math.hypot(h.x - hit.x, h.y - hit.y) < MIN_DISTANCE
     )
