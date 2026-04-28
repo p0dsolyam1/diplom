@@ -51,7 +51,7 @@ export function createWsServer(httpServer) {
   return wss
 }
 
-async function handleFrame(ws, { data: base64, exerciseId, offset }) {
+async function handleFrame(ws, { data: base64, exerciseId, offset, corners }) {
   if (!base64 || !exerciseId) {
     send(ws, { type: 'error', message: 'Ожидается: data (base64) и exerciseId' })
     return
@@ -60,6 +60,9 @@ async function handleFrame(ws, { data: base64, exerciseId, offset }) {
   // offset — смещение обрезанной области относительно исходного кадра
   // нужен для перевода координат AI обратно в систему координат полного кадра
   const cropOffset = offset ?? { x: 0, y: 0 }
+
+  // corners — углы калибровки в координатах полного кадра (640×480) или null
+  const calibrationPolygon = (corners && corners.length === 4) ? corners : null
 
   try {
     const { hits: rawHits } = await detectHits(base64)
@@ -71,7 +74,7 @@ async function handleFrame(ws, { data: base64, exerciseId, offset }) {
       y: h.y + cropOffset.y,
     }))
 
-    const filteredHits = filterHits(exerciseId, mappedHits)
+    const filteredHits = filterHits(exerciseId, mappedHits, calibrationPolygon)
     if (!filteredHits.length) return
 
     send(ws, { type: 'hits', hits: filteredHits, exerciseId })

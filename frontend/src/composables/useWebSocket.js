@@ -67,10 +67,11 @@ export function useWebSocket() {
    * @param {string} base64   - base64 кадра (уже обрезанного по мишени)
    * @param {number} exerciseId
    * @param {{ x: number, y: number }} offset - смещение обрезки в исходном кадре
+   * @param {Array<{x,y}>|null} corners - углы калибровки в координатах полного кадра
    */
-  function sendFrame(base64, exerciseId, offset = { x: 0, y: 0 }) {
+  function sendFrame(base64, exerciseId, offset = { x: 0, y: 0 }, corners = null) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return
-    ws.send(JSON.stringify({ type: 'frame', data: base64, exerciseId, offset }))
+    ws.send(JSON.stringify({ type: 'frame', data: base64, exerciseId, offset, corners }))
   }
 
   function on(type, handler) {

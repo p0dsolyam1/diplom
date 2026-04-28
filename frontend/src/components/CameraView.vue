@@ -111,7 +111,8 @@ watch(() => store.isRunning, (running) => {
     startSnapshots(
       ({ image, offset }) => {
         // Обработчик изображения → WS → backend (Нейронка → Фильтр → БД)
-        ws.sendFrame(image, store.exerciseId, offset)
+        // corners передаём для фильтрации попаданий вне плоскости калибровки
+        ws.sendFrame(image, store.exerciseId, offset, store.targetCorners)
       },
       // Передаём текущие углы мишени в обработчик изображения
       () => store.targetCorners
